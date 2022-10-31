@@ -2,9 +2,7 @@
 
 ## RAE: The Rainforest Automation Energy Dataset
 
-Raw data found at:
-
-    https://drive.google.com/drive/folders/1vr5JxSuee5SppATNnC16UOziJmdwJUMp?usp=share_link
+Raw data found in the [Google Drive](https://drive.google.com/drive/folders/1vr5JxSuee5SppATNnC16UOziJmdwJUMp?usp=share_link)
 
 ### Terms of use
 
