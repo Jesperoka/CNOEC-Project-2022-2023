@@ -6,6 +6,7 @@ function [outputArg1,outputArg2] = exampleFunction(inputArg1,inputArg2)
     constVal2 = 29;
     outputArg1 = inputArg1 + constVal1;
     outputArg2 = localFunction(inputArg2, constVal2);
+    test(13); % you can also call external functions
 end
 
 function [outputArg1] = localFunction(inputArg1, inputArg2)
