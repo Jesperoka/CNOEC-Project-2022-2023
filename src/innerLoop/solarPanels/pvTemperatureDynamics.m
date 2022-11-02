@@ -8,9 +8,8 @@ function T_p_dot = pvTemperatureDynamics(t, T_p, T_a, G, epsilon, pvParams)
     c_pp    = pvParams.panelAvgHeatCapacity;
     rayleighParams = pvParams.rayleigh;
 
-    t = round(t); % quick fix to test variable step integrator
-    G       = G(t+1);
-    T_a     = T_a(t+1);
+    G       = interp1([0:length(G)-1], G, t);
+    T_a     = interp1([0:length(T_a)-1], T_a, t);
     epsilon = 0.18;
 
     Ra  = rayleighNumber(T_p, T_a, rayleighParams);
