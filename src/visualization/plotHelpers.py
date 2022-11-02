@@ -31,10 +31,11 @@ def stylizeFigure(fig, axes, title, xlabel, ylabels, foregroundColor, background
     fig.suptitle(title, color=foregroundColor, fontsize=1.5*labelFontSize)
     fig.set_facecolor(backgroundColor)
     fig.set_edgecolor("none")
-    fig.legend(facecolor=backgroundColor, edgecolor=foregroundColor, labelcolor=foregroundColor)
+    fig.legend(facecolor=backgroundColor, edgecolor=foregroundColor, labelcolor=foregroundColor, fontsize=labelFontSize)
 
 # TODO: comment
-def standardizedPlot(data, labels, title="Standardized Plot", xlabel="x-axis", ylabel="y-axis-1", ylabel2="y-axis-2", colorProfile="dark", twin=False, twinSep=None, figsize=(8, 6), labelFontSize=14):
+# Argument 'data' needs to be a list of lists, even if only passing one list of y values, i.e. [[1,2,3,....]]
+def standardizedPlot(data, labels, title="Standardized Plot", xlabel="x-axis", ylabel="y-axis-1", ylabel2="y-axis-2", colorProfile="dark", twin=False, twinSep=None, figsize=(8, 6), grid=True, labelFontSize=14):
     fig, ax1 = plt.subplots(sharey = False, figsize=(8, 6))
     foregroundColor, backgroundColor, graphColors = getColors(colorProfile=colorProfile)
     if twin:
@@ -50,5 +51,6 @@ def standardizedPlot(data, labels, title="Standardized Plot", xlabel="x-axis", y
         plotLabeledData(axes[0], labeledData, graphColors)
         ylabels = [ylabel] 
     stylizeFigure(fig, axes, title, xlabel, ylabels, foregroundColor, backgroundColor, labelFontSize)
+    plt.grid(grid, linewidth=0.25)
     plt.show()
     return fig, axes
