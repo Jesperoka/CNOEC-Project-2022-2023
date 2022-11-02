@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     # Generating some basic solar irradiance and ambient temperature data. Just sine curves.
     G   = [uniform(0.999, 1.001)*maxSolarIrradiance*sin((2*pi)*(t/tf)) if sin((2*pi)*(t/tf)) >= 0 else 0.0 for t in range(0, tf + 1)]
-    T_a = [273.15 + 20*sin(2*pi*(t/tf) + pi/9) + 10*uniform(0.999, 1.001) for t in range(0, tf + 1)]
+    T_a = [273.15 + 20*sin(2*pi*(t/tf) - pi/9) + 10*uniform(0.999, 1.001) for t in range(0, tf + 1)]
 
     # Putting Python variables in MATLAB workspace.
     m.workspace['T_p_0'] = float(T_p_0)
@@ -44,13 +44,14 @@ if __name__ == "__main__":
     axes[0].plot(t, T_p, label="T_p", color="#6E975C")
     axes[0].plot(T_a, label="T_a", color="#1E4150")
     axes[1].plot(G, label="G", color="#DA7A41")
+    axes[1].plot(273.15, label="0°C", color="#D0C58E", linewidth=0.25)
 
     ylabels = ['temperature (K)', 'irradiance (W m^-2)']
     xlabels = ['time']
 
     foregroundColor = "#BBBBBB"
     backgroundColor = "#191919"
-    labelFontSize = 16
+    labelFontSize = 14
 
     for ax, ylabel in zip(axes, ylabels):
         plt.setp(ax.spines.values(), color=foregroundColor)
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         ax.set_ylabel(ylabel, color=foregroundColor, fontsize=labelFontSize)
         ax.set_facecolor(backgroundColor)
     
-    fig.suptitle("test", color=foregroundColor, fontsize=2*labelFontSize)
+    fig.suptitle("Panel Temperature (T_p), Ambient Temperature (T_a) and Solar Irradiation (G)", color=foregroundColor, fontsize=1.5*labelFontSize)
     fig.set_facecolor(backgroundColor)
     fig.set_edgecolor("none")
 
