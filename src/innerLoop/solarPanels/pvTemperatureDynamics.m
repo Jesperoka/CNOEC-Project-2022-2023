@@ -66,9 +66,9 @@ end
 % Nusselt number in the case of constant air flow across the panel surface
 function Nu = nusseltForcedConvection(Re, Pr)
     if Re < 5*10^5 
-        Nu = 0.664*(Re^(1/2))*(Pr^(1/3))
+        Nu = 0.664*(Re^(1/2))*(Pr^(1/3));
     elseif 5*10^5 <= Re && Re <= 10^7
-        Nu = (0.037*(Re^(4/5)) - 871)*(Pr^(1/3))
+        Nu = (0.037*(Re^(4/5)) - 871)*(Pr^(1/3));
     else
         error("Error. Nusselt number outside expected range.");
     end
@@ -76,15 +76,14 @@ end
 
 % (UNFINISHED) Thermal conductivity evaluated at the mean film temperature of the solar panel and the surrounding ambient air.
 function K = filmThermalConductivity(T_p, T_a)
-    K = 0.23498 % TODO: find a more accurate function for this.
+    K = 0.23498; % TODO: find a more accurate function for this.
 end
 
 % Overall heat transfer coefficient as a function of the Nusselt number Nu and thermal conductivity K.
 function h = heatTransferCoefficient(Nu, K, param)
-    L_c = param
+    L_c = param;
     
-    h = (Nu * K) / L_c
-    disp(h)
+    h = (Nu * K) / L_c;
 end
 
 % Solar irradiation heat gain equation.
