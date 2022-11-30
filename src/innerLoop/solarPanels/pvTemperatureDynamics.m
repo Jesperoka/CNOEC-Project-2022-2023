@@ -10,11 +10,11 @@ function T_p_dot = pvTemperatureDynamics(t, T_p, T_a, G, V_air, pvParams)
     L       = pvParams.panelLength;
     rayleighParams = pvParams.rayleigh;
 
-    epsilon = 0.18;
+    epsilon = 0.18;                                     % TODO: remove
 
-    G       = interp1([0:length(G)-1], G, t);
-    T_a     = interp1([0:length(T_a)-1], T_a, t);
-    V_air   = interp1([0:length(V_air)-1], V_air, t);
+    G       = interp1([0:length(G)-1], G, t);           % TODO: remove
+    T_a     = interp1([0:length(T_a)-1], T_a, t);       % TODO: remove
+    V_air   = interp1([0:length(V_air)-1], V_air, t);   % TODO: remove
     if V_air == 0
         Ra  = rayleighNumber(T_p, T_a, rayleighParams);
         Nu  = nusseltNaturalConvection(Ra);
@@ -76,7 +76,7 @@ end
 
 % (UNFINISHED) Thermal conductivity evaluated at the mean film temperature of the solar panel and the surrounding ambient air.
 function K = filmThermalConductivity(T_p, T_a)
-    K = 0.23498; % TODO: find a more accurate function for this.
+    K = 148; % TODO: find a more accurate function for this.
 end
 
 % Overall heat transfer coefficient as a function of the Nusselt number Nu and thermal conductivity K.
