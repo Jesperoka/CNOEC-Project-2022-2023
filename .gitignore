@@ -1,3 +1,6 @@
-.vscode
+.vscode/
 rawData/house1/
 __pycache__
+slprj/
+*.autosave
+*.slxc
