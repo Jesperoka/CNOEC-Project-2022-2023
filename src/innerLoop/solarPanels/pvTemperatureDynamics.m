@@ -1,20 +1,17 @@
 % This file implements the mathematical relations governing the temperature dynamics of a solar panel.
 
 % TODO: Description
-function T_p_dot = pvTemperatureDynamics(t, T_p, T_a, G, V_air, pvParams)
-    L_c     = pvParams.characteristicLength;
-    A       = pvParams.panelArea;
-    m_p     = pvParams.panelMass;
-    c_pp    = pvParams.panelAvgHeatCapacity;
-    Pr      = pvParams.prandtlNumber;
-    L       = pvParams.panelLength;
-    rayleighParams = pvParams.rayleigh;
+function T_p_dot = pvTemperatureDynamics(T_p, T_a, V_air, G, pvTemperatureParams)
+    L_c     = pvTemperatureParams.characteristicLength;
+    A       = pvTemperatureParams.panelArea;
+    m_p     = pvTemperatureParams.panelMass;
+    c_pp    = pvTemperatureParams.panelAvgHeatCapacity;
+    Pr      = pvTemperatureParams.prandtlNumber;
+    L       = pvTemperatureParams.panelLength;
+    rayleighParams = pvTemperatureParams.rayleigh;
 
-    epsilon = 0.18;                                     % TODO: remove
+    epsilon = 0.18;                                     % TODO: obtain from constants.m
 
-    G       = interp1([0:length(G)-1], G, t);           % TODO: remove
-    T_a     = interp1([0:length(T_a)-1], T_a, t);       % TODO: remove
-    V_air   = interp1([0:length(V_air)-1], V_air, t);   % TODO: remove
     if V_air == 0
         Ra  = rayleighNumber(T_p, T_a, rayleighParams);
         Nu  = nusseltNaturalConvection(Ra);
