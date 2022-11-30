@@ -1,7 +1,17 @@
-% Parameters to load into Simulink
-pvPowerParams       = pvPowerParams();
-pvTemperatureParams = pvTemperatureParams();
-battParams          = battParams();
+clearvars;
+
+% Load parameters into Simulink
+panelCurrentParams      = pvCurrentParams();
+panelTemperatureParams  = pvTemperatureParams();
+batteryParams           = battParams();
+
+busInfo1                = Simulink.Bus.createObject(panelCurrentParams);
+busInfo2                = Simulink.Bus.createObject(panelTemperatureParams);
+busInfo3                = Simulink.Bus.createObject(batteryParams);
+
+panCurrPars           = evalin('base', busInfo1.busName);
+panTempPars           = evalin('base', busInfo2.busName);
+battPars              = evalin('base', busInfo3.busName);
 
 % TODO: create
 % function output = airCoolerParams()
@@ -12,7 +22,7 @@ battParams          = battParams();
 function output = battParams()
     V_oc        = 210;          % V
     R_0         = 1;            % Ω
-    Q_nom       = 10000/V_oc    % C (TODO: check if number is A h, and also what 10000 is)
+    Q_nom       = 10000/V_oc;    % C (TODO: check if number is A h, and also what 10000 is)
 
     battParams.openCircuitVoltage   = V_oc;
     battParams.batteryResistance    = R_0;
@@ -22,19 +32,20 @@ function output = battParams()
 end
 
 % Function outputting the parameters for the power dynamics of the solar panels
-function output = pvPowerParams()
-    q           = 1.6e-19; % electron charge [C]
-    k           = 1.3805e-23; % Boltzmann's constant
-    Tr          = 298.15; % nominal temperature
+function output = pvCurrentParams()
+    q           = 1.6e-19;      % C
+    k           = 1.3807e-23;   % J K^-1
+    Tr          = 298.15;       % K
     Eg0         = 1.1;
     Voc         = 21.24;
     Isc         = 2.55;
     Ki          = 0.002;
     Ns          = 36;
-    Np          = 1;
+    Np          = 1; % Number of panels (presumably)
     n           = 1.6;
     Rs          = 1e-4;
     Rsh         = 1e3;
+    % TODO: add unit comments
 
     pvPowerParams.electronCharge        = q;
     pvPowerParams.boltzmannConstant     = k;
@@ -68,5 +79,5 @@ function output = pvTemperatureParams()
     pvTemperatureParams.panelAvgHeatCapacity   = c_pp; % J kg^-1 K^-1
     pvTemperatureParams.prandtlNumber          = Pr;   % dimensionless  
 
-    output = pvParams;
+    output = pvTemperatureParams;
 end
