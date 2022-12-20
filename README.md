@@ -3,4 +3,4 @@ Project for the course Constrained Numerical Optimization for Estimation and Con
 
 ### Useful things to remember
 
-Run init.m before trying to simulate.
+Run init.m before trying to run simulation.slx
