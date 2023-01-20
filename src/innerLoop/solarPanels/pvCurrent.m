@@ -23,7 +23,7 @@ function I_p = pvCurrent(I_p, T_p, G, V, pvPowerParams)
     Irs     = Isc/(exp(q*Voc/(Ns*k*n*T_p))-1);
     I0      = Irs*((T_p/Tr)^3)*exp(q*Eg0/n/k*(-1/T_p+1/Tr));
     Vt      = k*T_p/q;  % "diode thermal voltage"
-    Ish     = ( V * Np/Ns + I_p*Rs) / Rsh
+    Ish     = ( V * Np/Ns + I_p*Rs) / Rsh;
 
     I_p   = Np*Iph - Np*I0*(exp((V/Ns+I_p*Rs/Np)/n*Vt)-1) - Ish;
 end
