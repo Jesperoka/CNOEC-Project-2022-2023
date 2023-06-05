@@ -1,8 +1,9 @@
-function [alpha, beta, gamma, I_air, V_mppt] = Optimizer(powerDemand, powerPrice, batteryCharge, solarIrradiation, ambientTemperature, solarPanelPower)
+function [alpha, beta, gamma, I_air, V_mppt] = optimizer(powerDemand, powerPrice, batteryCharge, solarIrradiation, ambientTemperature, solarPanelPower)
 
-    % Something something
+     
     
 
+    % outputs
     alpha = 1
     beta = 1
     gamma = 1

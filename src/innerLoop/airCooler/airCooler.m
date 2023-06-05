@@ -1,15 +1,12 @@
 % placeholder file
 function V_air = airCooler(I_in)
-    % compute dynamics of air cooling system
-    %   - compressed air -> pre-charge compressed air in tank
-    %   - electric fan
-    %   
+    % THIS IS JUST A MADE UP FAN ARRAY THAT CAN BLOW MORE AIR
+    % IF IT IS GIVEN MORE CURRENT.
+    % LOOSELY BASED ON: https://noctua.at/en/nf-f12-industrialppc-3000-pwm/specification
 
     areaOfPvPanel   = 0.7749; % m^2
     numberOfPanels  = 1;
 
-    % Placeholder industrial electric fan
-    % https://noctua.at/en/nf-f12-industrialppc-3000-pwm/specification
     maxAirflow      = 186.7/(60*60); % m^3 s^-1
     maxCurrent      = 0.3;           % A
     area            = pi*0.118^2;         % m^2
