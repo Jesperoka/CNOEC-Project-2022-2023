@@ -1,4 +1,5 @@
 clearvars;
 
-addpath(genpath(pwd));
+addpath(genpath(pwd+"\.."));
 constants;
+loadData;

@@ -1,5 +1,5 @@
 % TODO: description and improve readability (also complete parameter getting)
-function I_p = pvCurrent(I_p, T_p, G, V, pvPowerParams)
+function I_p = pvCurrent(I_p, T_p, G, V, pvCurrentParams)
     q   = pvCurrentParams.electronCharge;
     k   = pvCurrentParams.boltzmannConstant;
     Tr  = pvCurrentParams.nominalTemperature;   % nominal temperature
@@ -14,8 +14,8 @@ function I_p = pvCurrent(I_p, T_p, G, V, pvPowerParams)
     Rsh = 1e3;                                  % shunt resistance
 
     % Ideal Diode
-    if I_p<0
-        I_p=0;
+    if I_p < 0
+        I_p = 0;
     end
 
     % Circuit equations
@@ -26,4 +26,9 @@ function I_p = pvCurrent(I_p, T_p, G, V, pvPowerParams)
     Ish     = ( V * Np/Ns + I_p*Rs) / Rsh;
 
     I_p   = Np*Iph - Np*I0*(exp((V/Ns+I_p*Rs/Np)/n*Vt)-1) - Ish;
+
+    % Ideal Diode
+    if I_p < 0
+        I_p = 0;
+    end
 end

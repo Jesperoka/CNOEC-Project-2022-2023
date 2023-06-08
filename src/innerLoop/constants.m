@@ -4,19 +4,32 @@ clearvars;
 panelCurrentParams      = pvCurrentParams();
 panelTemperatureParams  = pvTemperatureParams();
 batteryParams           = battParams();
+optimizerParams         = optParams();
 
 busInfo1                = Simulink.Bus.createObject(panelCurrentParams);
 busInfo2                = Simulink.Bus.createObject(panelTemperatureParams);
 busInfo3                = Simulink.Bus.createObject(batteryParams);
+busInfo4                = Simulink.Bus.createObject(optimizerParams);
 
-panCurrPars           = evalin('base', busInfo1.busName);
-panTempPars           = evalin('base', busInfo2.busName);
-battPars              = evalin('base', busInfo3.busName);
+panCurrPars             = evalin('base', busInfo1.busName);
+panTempPars             = evalin('base', busInfo2.busName);
+battPars                = evalin('base', busInfo3.busName);
+optPars                 = evalin('base', busInfo4.busName);
 
 % TODO: create
 % function output = airCoolerParams()
 %     output = 0
 % end
+
+% Function outputting the parameters for the optimizer
+function output = optParams()
+    optimizerParams.optimizationHorizon = 10;
+    optimizerParams.mpcBlockSize        = 5;  % must be less than or equal to optimizationHorizon
+    optimizerParams.numControlInputs    = 4;  % must correspond with simulink model and optimizer functions
+    optimizerParams.simulationStepSize  = 0.1;
+
+    output = optimizerParams;
+end
 
 % Function outputting the parameters for the battery dynamics
 function output = battParams()
@@ -27,6 +40,7 @@ function output = battParams()
     battParams.openCircuitVoltage   = V_oc;
     battParams.batteryResistance    = R_0;
     battParams.nominalCapacity      = Q_nom;
+    battParams.maxCharge            = 10*546480; % 10 times the max charge of a Tesla battery
 
     output = battParams;
 end

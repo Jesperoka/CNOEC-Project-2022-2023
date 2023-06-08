@@ -1,12 +1,37 @@
-function [alpha, beta, gamma, I_air, V_mppt] = optimizer(powerDemand, powerPrice, batteryCharge, solarIrradiation, ambientTemperature, solarPanelPower)
+function [alpha, beta, gamma, I_air, V_mppt] = optimizer(...
+                                                         houseActualPower,...
+                                                         batteryCharge,...
+                                                         solarPanelTemperature,...
+                                                         solarPanelCurrent,...
+                                                         historyVectors,...
+                                                         initialGuess,...
+                                                         optimizerParams,...
+                                                         TEMPORARY_panelTemperatureParams,...
+                                                         TEMPORARY_panelCurrentParams,...
+                                                         TEMPORARY_batteryParams,...
+                                                         TEMPORARY_trueData...
+                                                        ) %#codegen
 
-     
+    V_mppt = zeros(optimizerParams.optimizationHorizon, 1); % not used
+
+    powerDemandHistory          = historyVectors(:,1);
+    gridPriceHistory            = historyVectors(:,2); 
+    solarIrradiationHistory     = historyVectors(:,3); 
+    ambientTemperatureHistory   = historyVectors(:,4); 
+
+    powerDemandEstimate         = powerDemandEstimator(powerDemandHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData);
+    solarIrradiationEstimate    = solarIrradiationEstimator(solarIrradiationHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData); 
+    ambientTemperatureEstimate  = ambientTemperatureEstimator(ambientTemperatureHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData); 
+    gridPriceEstimate           = gridPriceEstimator(gridPriceHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData);  
+
+    estimates       = [powerDemandEstimate, solarIrradiationEstimate, ambientTemperatureEstimate, gridPriceEstimate];
+    initialValues   = [solarPanelTemperature, solarPanelCurrent, houseActualPower, batteryCharge];
+    parameters      = {TEMPORARY_panelTemperatureParams, TEMPORARY_panelCurrentParams, TEMPORARY_batteryParams};
     
-
-    % outputs
-    alpha = 1
-    beta = 1
-    gamma = 1
-    I_air = 1
-    V_mppt = 1
+    [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters, initialGuess, optimizerParams);
+    
+    assert(all(size(alpha) == [optimizerParams.optimizationHorizon, 1]))
+    assert(all(size(beta) == [optimizerParams.optimizationHorizon, 1]))
+    assert(all(size(gamma) == [optimizerParams.optimizationHorizon, 1]))
+    assert(all(size(I_air) == [optimizerParams.optimizationHorizon, 1]))
 end
