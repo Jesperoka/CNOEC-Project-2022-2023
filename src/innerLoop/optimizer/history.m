@@ -1,6 +1,6 @@
 % Level 2 S-function to track signal histories
 function history(block)
-    CAPACITY = 1440; % yep, I'm just doing this cause' documentation is bad and time is limited 
+    CAPACITY = 10000; % default capacity
 
     setup(block); % Don't call any other functions
     % Setup the basic characteristics of the S-function block. Is required.
@@ -21,13 +21,15 @@ function history(block)
         block.InputPort(1).Complexity = 'Real';
         block.InputPort(1).DirectFeedthrough = true;
       
+        % Register parameters
+        block.NumDialogPrms     = 1;
+        block.DialogPrmsTunable = {'Nontunable'};
+        CAPACITY = block.DialogPrm(1).Data;
+
         % Override output port properties
         block.OutputPort(1).DatatypeID  = 0; % double
         block.OutputPort(1).Complexity  = 'Real';
         block.OutputPort(1).Dimensions  = [CAPACITY, 1];
-
-        % Register parameters
-        block.NumDialogPrms     = 0;
 
         % Register sample times
         %  [0 offset]            : Continuous sample time

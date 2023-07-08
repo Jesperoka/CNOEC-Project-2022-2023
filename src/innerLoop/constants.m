@@ -23,10 +23,11 @@ optPars                 = evalin('base', busInfo4.busName);
 
 % Function outputting the parameters for the optimizer
 function output = optParams()
-    optimizerParams.optimizationHorizon = 10;
-    optimizerParams.mpcBlockSize        = 5;  % must be less than or equal to optimizationHorizon
-    optimizerParams.numControlInputs    = 4;  % must correspond with simulink model and optimizer functions
-    optimizerParams.simulationStepSize  = 0.1;
+    optimizerParams.optimizationHorizon = 100;      % unit is simulationStepSize
+    optimizerParams.mpcBlockSize        = 15;       % unit is seconds
+    optimizerParams.numControlInputs    = 4;        % must correspond with simulink model and optimizer functions
+    optimizerParams.simulationStepSize  = 0.3;      % unit is seconds, granularity of optimizer simulation (IRK 1)
+    optimizerParams.simulinkStepSize    = 0.2;      % unit is seconds, granularity of simulink simulation (ode14x)
 
     output = optimizerParams;
 end
