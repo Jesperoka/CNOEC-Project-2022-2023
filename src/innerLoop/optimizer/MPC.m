@@ -21,7 +21,7 @@ function [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters,
                                     'HessianApproximation', 'bfgs',...
                                     'BarrierParamUpdate','monotone',...
                                     'HonorBounds',false,...
-                                    'UseParallel', false); 
+                                    'UseParallel', true); 
     end
 
     [costFunction, constraintFunction] = createNonlinearCostAndConstraints(initialValues, estimates, parameters, optimizerParams);
@@ -176,23 +176,13 @@ function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, init
         P_p             = V_p * I_p(i+1);
 
         % Power Allocation 
-        [P_h_in, P_g_in(i+1), P_b_in] = pvPowerSplitter(P_p, repeatedAlpha(i+1), repeatedBeta(i+1));
-        [P_b_out, P_g_out(i+1)] = powerDrawSplitter(P_d(i+1), P_h_in, repeatedGamma(i+1)); % WARNING: double check, changed from P_h_in_a to P_h_in
+        [P_h_in,  P_g_in(i+1), P_b_in]  = pvPowerSplitter(P_p, repeatedAlpha(i+1), repeatedBeta(i+1));
+        [P_b_out, P_g_out(i+1)]         = powerDrawSplitter(P_d(i+1), P_h_in, repeatedGamma(i+1)); % WARNING: double check, changed from P_h_in_a to P_h_in
 
-%         P_b_minus       = -1.0*min( P_b_in - P_b_out,  0.0 );
-%         P_g_minus       = -1.0*min( P_g_in(i+1) - P_g_out(i+1),  0.0 );
-% 
-%         P_h_in_a(i+1) = P_h_in + P_b_minus + P_g_minus;
-
-        P_b     = P_b_in - P_b_out; 
+        P_b = P_b_in - P_b_out; 
 
         C_b(i+1) = C_b(i) + dt*batteryDynamics(P_b, battParams); % this is what 1st order IRK turns into when system dynamics only depends on input... I think.
     end
-
-    % Grid power flow output vectors
-%     P_g_in  = (repeatedAlpha * V_p) .* I_p;
-%     P_g_out = repeatedGamma .* (P_d - P_h_in_a);
-
 end
 
 

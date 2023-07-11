@@ -23,9 +23,9 @@ optPars                 = evalin('base', busInfo4.busName);
 
 % Function outputting the parameters for the optimizer
 function output = optParams()
-    optimizerParams.optimizationHorizon     = 100;      % unit is simulationStepSize
-    optimizerParams.controlVariableHorizon  = 10;       % how many intervals to divide optimizationHorizon into, must evenly divide optimizationHorizon
-    optimizerParams.mpcBlockSize            = 15;       % unit is seconds
+    optimizerParams.optimizationHorizon     = 36000;    % unit is simulationStepSize
+    optimizerParams.controlVariableHorizon  = 20;       % how many intervals to divide optimizationHorizon into, must evenly divide optimizationHorizon
+    optimizerParams.mpcBlockSize            = 5400;     % unit is seconds
     optimizerParams.numControlInputs        = 4;        % must correspond with simulink model and optimizer functions
     optimizerParams.simulationStepSize      = 0.3;      % unit is seconds, granularity of optimizer simulation (IRK 1)
     optimizerParams.simulinkStepSize        = 0.2;      % unit is seconds, granularity of simulink simulation (ode14x)
@@ -36,7 +36,7 @@ end
 % Function outputting the parameters for the battery dynamics
 function output = battParams()
     V_oc        = 210;          % V
-    R_0         = 1;            % Ω
+    R_0         = 1;            % 
     Q_nom       = 10000/V_oc;    % C (TODO: check if number is A h, and also what 10000 is)
 
     battParams.openCircuitVoltage   = V_oc;

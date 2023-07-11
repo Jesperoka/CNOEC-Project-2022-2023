@@ -37,7 +37,7 @@ function history(block)
         %
         %  [-1, 0]               : Inherited sample time
         %  [-2, 0]               : Variable sample time
-        block.SampleTimes = [-1 0];
+        block.SampleTimes = [1 0];
 
         % Specify the block simStateCompliance. The allowed values are:
         %    'UnknownSimState', < The default setting; warn and assume DefaultSimState

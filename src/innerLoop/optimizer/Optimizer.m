@@ -19,10 +19,18 @@ function [alpha, beta, gamma, I_air] = optimizer(...
     solarIrradiationHistory     = historyVectors(:,3); 
     ambientTemperatureHistory   = historyVectors(:,4); 
 
-    powerDemandEstimate         = powerDemandEstimator(powerDemandHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData);
-    solarIrradiationEstimate    = solarIrradiationEstimator(solarIrradiationHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData); 
-    ambientTemperatureEstimate  = ambientTemperatureEstimator(ambientTemperatureHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData); 
-    gridPriceEstimate           = gridPriceEstimator(gridPriceHistory, optimizerParams.optimizationHorizon, TEMPORARY_trueData);  
+    estimateLength      = floor(optimizerParams.simulationStepSize * optimizerParams.optimizationHorizon);
+    interpolationPoints = linspace(1, estimateLength, optimizerParams.optimizationHorizon).';
+
+    powerDemandEstimate         = powerDemandEstimator(powerDemandHistory, estimateLength, TEMPORARY_trueData);
+    solarIrradiationEstimate    = solarIrradiationEstimator(solarIrradiationHistory, estimateLength, TEMPORARY_trueData); 
+    ambientTemperatureEstimate  = ambientTemperatureEstimator(ambientTemperatureHistory, estimateLength, TEMPORARY_trueData); 
+    gridPriceEstimate           = gridPriceEstimator(gridPriceHistory, estimateLength, TEMPORARY_trueData);
+
+    powerDemandEstimate         = interp1(powerDemandEstimate, interpolationPoints);
+    solarIrradiationEstimate    = interp1(solarIrradiationEstimate, interpolationPoints);
+    ambientTemperatureEstimate  = interp1(ambientTemperatureEstimate, interpolationPoints);
+    gridPriceEstimate           = interp1(gridPriceEstimate, interpolationPoints);
 
     estimates       = [powerDemandEstimate, solarIrradiationEstimate, ambientTemperatureEstimate, gridPriceEstimate];
     initialValues   = [solarPanelTemperature, solarPanelCurrent, houseActualPower, batteryCharge];
