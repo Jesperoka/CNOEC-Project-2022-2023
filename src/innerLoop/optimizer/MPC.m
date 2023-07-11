@@ -1,9 +1,15 @@
 % Finite horizon optimal control
-function [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters, initialGuess, optimizerParams) % pass estiamtes
-    N = optimizerParams.optimizationHorizon;
-    C = optimizerParams.numControlInputs;
-    
-    options         = optimoptions( 'fmincon',...
+function [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters, initialGuess, optimizerParams) % pass estiamtes    
+    persistent K C options A b lowerBound upperBound;
+    if isempty(A)
+        K = optimizerParams.controlVariableHorizon;
+        C = optimizerParams.numControlInputs;
+
+        [A, b]      = createLinearConstraints(K);   
+        lowerBound  = zeros(C*K, 1, "double");      
+        upperBound  = Inf*ones(C*K, 1, "double");
+
+        options         = optimoptions( 'fmincon',...
                                     'Algorithm','interior-point',...
                                     'MaxFunctionEvaluations', 25000,...
                                     'MaxIterations', 10000,...
@@ -15,18 +21,14 @@ function [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters,
                                     'HessianApproximation', 'bfgs',...
                                     'BarrierParamUpdate','monotone',...
                                     'HonorBounds',false,...
-                                    'UseParallel', false);   
-    
-    [A, b]          = createLinearConstraints(N); % TODO: can use persistent + isempty() later
-    
-    lowerBound      = zeros(C*N, 1, "double");
-    upperBound      = Inf*ones(C*N, 1, "double");
+                                    'UseParallel', false); 
+    end
 
     [costFunction, constraintFunction] = createNonlinearCostAndConstraints(initialValues, estimates, parameters, optimizerParams);
 
     [u_star, ~, exitflag, output] = fmincon(costFunction, initialGuess, A, b, [], [], lowerBound, upperBound, constraintFunction, options);
     
-    [alpha, beta, gamma, I_air] = splitInputVector(u_star, N, C);
+    [alpha, beta, gamma, I_air] = splitInputVector(u_star, K, C);
 
     disp(exitflag)
     disp(output)
@@ -34,7 +36,7 @@ end
 
 
 % This implementation is specific to the ordering- and number of control inputs,  and their upper bounds
-function [A, b] = createLinearConstraints(optimizationHorizon)
+function [A, b] = createLinearConstraints(controlVariableHorizon)
     % Constraint Au <= b represents
     %
     % alpha_i + beta_i <= 1
@@ -46,13 +48,13 @@ function [A, b] = createLinearConstraints(optimizationHorizon)
     % for a column vector u = [alpha; beta; gamma; I_air]
     I_AIR_MAX = 10; % TODO: move to a parameter struct
 
-    N = optimizationHorizon;
+    K = controlVariableHorizon;
 
-    A = cast([[eye(N), zeros(N, 3*N)] + [zeros(N, N), eye(N), zeros(N, 2*N)];
-        eye(4*N)], "double");
+    A = cast([[eye(K), zeros(K, 3*K)] + [zeros(K, K), eye(K), zeros(K, 2*K)];
+        eye(4*K)], "double");
 
-    b = cast([ones(4*N, 1);
-        I_AIR_MAX*ones(N, 1)], "double");
+    b = cast([ones(4*K, 1);
+        I_AIR_MAX*ones(K, 1)], "double");
     
 end
 
@@ -61,12 +63,13 @@ end
 % between the cost function and constraint function at each iteration
 function [costFunction, constraintFunction] = createNonlinearCostAndConstraints(initialValues, estimates, parameters, optimizerParams)
     N = optimizerParams.optimizationHorizon;
+    K = optimizerParams.controlVariableHorizon;
     C = optimizerParams.numControlInputs;
 
     batteryParams = parameters{3};
     gridPriceEstimate = estimates(:,4);
 
-    uLast   = NaN(C*N, 1, "double"); % last u-value for which simulateSystem() was called
+    uLast   = NaN(C*K, 1, "double"); % last u-value for which simulateSystem() was called
     P_g_in  = NaN(N, 1, "double"); % shared result of simulateSystem()
     P_g_out = NaN(N, 1, "double"); % shared result of simulateSystem() 
     C_b     = NaN(N, 1, "double"); % shared result of simulateSystem()
@@ -76,11 +79,11 @@ function [costFunction, constraintFunction] = createNonlinearCostAndConstraints(
 
     function [c, ceq] = enclosedNonlinearConstraintFunction(u)
         if ~isequal(u, uLast)
-            [alpha, beta, gamma, I_air] = splitInputVector(u, N, C);
+            [alpha, beta, gamma, I_air] = splitInputVector(u, K, C);
             [P_g_in, P_g_out, C_b]      = simulateSystem(alpha, beta, gamma, I_air, initialValues, estimates, parameters, optimizerParams);
             uLast = u;
         end
-        c = cast([-1.0*C_b;                                % require non-negative battery charge
+        c = cast([-1.0*C_b;                          % require non-negative battery charge
              C_b - batteryParams.maxCharge], "double");    % require charges less than max capacity
         ceq = [];
         assert(allfinite(c))
@@ -89,7 +92,7 @@ function [costFunction, constraintFunction] = createNonlinearCostAndConstraints(
 
     function cost = enclosedCostFunction(u)
         if ~isequal(u, uLast)
-            [alpha, beta, gamma, I_air] = splitInputVector(u, N, C);
+            [alpha, beta, gamma, I_air] = splitInputVector(u, K, C);
             [P_g_in, P_g_out, C_b]      = simulateSystem(alpha, beta, gamma, I_air, initialValues, estimates, parameters, optimizerParams);
             uLast = u;
         end
@@ -104,9 +107,23 @@ end
 function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, initialValues, estimates, parameters, optimizerParams)
     % Parameters
     N   = optimizerParams.optimizationHorizon;
+    K   = optimizerParams.controlVariableHorizon;
     dt  = optimizerParams.simulationStepSize;
     V_cs = 12; % TODO: move to airCooler parameter struct
     V_p  = 12; % TODO: move to panelCurrent parameter struct (also move the one in the simulink file)
+    
+    assert(mod(N, K) == 0); % opt. horizon must be divisible by control var. horizon
+
+    % Reduce control granularity for computational feasibility
+    singleControlInputLength    = N / K;
+    justSomeOnes                = ones([singleControlInputLength, 1]);
+
+    repeatedAlpha   = kron(alpha, justSomeOnes);
+    repeatedBeta    = kron(beta,  justSomeOnes);
+    repeatedGamma   = kron(gamma, justSomeOnes);
+    repeatedI_air   = max(kron(I_air, justSomeOnes), 0.0);  % negative values cause problems for fzero()
+
+    assert(length(repeatedGamma) == N);
 
     pvTemperatureParams = parameters{1};
     pvCurrentParams     = parameters{2};
@@ -142,9 +159,9 @@ function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, init
         % Estimates
         G           = solarIrradiationEstimate(i+1);
         T_a         = ambientTemperatureEstimate(i+1);
-        P_d(i+1)    = powerDemandEstimate(i+1) + V_cs*I_air(i+1);
+        P_d(i+1)    = powerDemandEstimate(i+1) + V_cs*repeatedI_air(i+1);
 
-        V_air = airCooler(I_air(i));
+        V_air = airCooler(repeatedI_air(i));
         
         % Parameterized functions
         T_p_sim_step    = T_p_simulation_step(T_p(i), T_a, V_air, G);
@@ -152,13 +169,18 @@ function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, init
 
         % Solar Panel Dynamics
 
+%         try
+%             fzero(T_p_sim_step, T_p(i))
+%         catch exception
+%             disp("test");
+%         end
         T_p(i+1)        = fzero(T_p_sim_step, T_p(i));
-        I_p(i+1)        = max( fzero(I_p_char_eq, I_p(i)),  0.0 ); % I_p(i) is just the initial guess, has nothing to do with I_p(i+1)
+        I_p(i+1)        = max( fzero(I_p_char_eq, I_p(i)),  0.0 );
         P_p             = V_p * I_p(i+1);
 
         % Power Allocation 
-        [P_h_in, P_g_in, P_b_in] = pvPowerSplitter(P_p, alpha(i+1), beta(i+1));
-        [P_b_out, P_g_out] = powerDrawSplitter(P_d(i+1), P_h_in_a(i), gamma(i+1));
+        [P_h_in, P_g_in, P_b_in] = pvPowerSplitter(P_p, repeatedAlpha(i+1), repeatedBeta(i+1));
+        [P_b_out, P_g_out] = powerDrawSplitter(P_d(i+1), P_h_in_a(i), repeatedGamma(i+1));
 
         P_b_minus       = -1.0*min( P_b_in - P_b_out,  0.0 );
         P_g_minus       = -1.0*min( P_g_in - P_g_out,  0.0 );
@@ -171,18 +193,18 @@ function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, init
     end
 
     % Grid power flow output vectors
-    P_g_in  = (alpha * V_p) .* I_p;
-    P_g_out = gamma .* (P_d - P_h_in_a);
+    P_g_in  = (repeatedAlpha * V_p) .* I_p;
+    P_g_out = repeatedGamma .* (P_d - P_h_in_a);
 
 end
 
 
 % Helper funtion to split the contiguous input vector u^T = [alpha^T, beta^T, gamma^T, I_air^T]
-function [alpha, beta, gamma, I_air] = splitInputVector(u, optimizationHorizon, numControlInputs)
-    assert(length(u) / numControlInputs == optimizationHorizon);
+function [alpha, beta, gamma, I_air] = splitInputVector(u, controlVariableHorizon, numControlInputs)
+    assert(length(u) / numControlInputs == controlVariableHorizon);
 
-    alpha   = u(1                         : 1*optimizationHorizon);
-    beta    = u(1*optimizationHorizon + 1 : 2*optimizationHorizon);
-    gamma   = u(2*optimizationHorizon + 1 : 3*optimizationHorizon);
-    I_air   = u(3*optimizationHorizon + 1 : 4*optimizationHorizon);
+    alpha   = u(1                            : 1*controlVariableHorizon);
+    beta    = u(1*controlVariableHorizon + 1 : 2*controlVariableHorizon);
+    gamma   = u(2*controlVariableHorizon + 1 : 3*controlVariableHorizon);
+    I_air   = u(3*controlVariableHorizon + 1 : 4*controlVariableHorizon);
 end

@@ -1,4 +1,4 @@
-function [alpha, beta, gamma, I_air, V_mppt] = optimizer(...
+function [alpha, beta, gamma, I_air] = optimizer(...
                                                          houseActualPower,...
                                                          batteryCharge,...
                                                          solarPanelTemperature,...
@@ -12,7 +12,7 @@ function [alpha, beta, gamma, I_air, V_mppt] = optimizer(...
                                                          TEMPORARY_trueData...
                                                         ) %#codegen
 
-    V_mppt = zeros(optimizerParams.optimizationHorizon, 1); % not used
+%     V_mppt = zeros(optimizerParams.controlVariableHorizon, 1); % not used
 
     powerDemandHistory          = historyVectors(:,1);
     gridPriceHistory            = historyVectors(:,2); 
@@ -28,10 +28,11 @@ function [alpha, beta, gamma, I_air, V_mppt] = optimizer(...
     initialValues   = [solarPanelTemperature, solarPanelCurrent, houseActualPower, batteryCharge];
     parameters      = {TEMPORARY_panelTemperatureParams, TEMPORARY_panelCurrentParams, TEMPORARY_batteryParams};
     
+    assert(all(size(initialGuess) == [4*optimizerParams.controlVariableHorizon, 1]))
     [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters, initialGuess, optimizerParams);
     
-    assert(all(size(alpha) == [optimizerParams.optimizationHorizon, 1]))
-    assert(all(size(beta) == [optimizerParams.optimizationHorizon, 1]))
-    assert(all(size(gamma) == [optimizerParams.optimizationHorizon, 1]))
-    assert(all(size(I_air) == [optimizerParams.optimizationHorizon, 1]))
+    assert(all(size(alpha) == [optimizerParams.controlVariableHorizon, 1]))
+    assert(all(size(beta)  == [optimizerParams.controlVariableHorizon, 1]))
+    assert(all(size(gamma) == [optimizerParams.controlVariableHorizon, 1]))
+    assert(all(size(I_air) == [optimizerParams.controlVariableHorizon, 1]))
 end
