@@ -21,7 +21,7 @@ function [alpha, beta, gamma, I_air] = MPC(initialValues, estimates, parameters,
                                     'HessianApproximation', 'bfgs',...
                                     'BarrierParamUpdate','monotone',...
                                     'HonorBounds',false,...
-                                    'UseParallel', false); 
+                                    'UseParallel', true); 
     end
 
     [costFunction, constraintFunction] = createNonlinearCostAndConstraints(initialValues, estimates, parameters, optimizerParams);
@@ -144,15 +144,18 @@ function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, init
     % Initialize vectors to initial values
     T_p_0       = initialValues(1);
     I_p_0       = initialValues(2);
-    P_h_in_a_0  = initialValues(3);
+%     P_h_in_a_0  = initialValues(3);
     C_b_0       = initialValues(4);
 
     T_p         = T_p_0*ones(N, 1, "double");
     I_p         = I_p_0*ones(N, 1, "double");
-    P_h_in_a    = P_h_in_a_0*ones(N, 1, "double");
+%     P_h_in_a    = P_h_in_a_0*ones(N, 1, "double");
     C_b         = C_b_0*ones(N, 1, "double");
     
     P_d         = powerDemandEstimate(1)*ones(N, 1, "double");
+
+    P_g_in      = zeros(N, 1);
+    P_g_out      = zeros(N, 1);
 
     % Simulation
     for i = 1 : N - 1
@@ -168,34 +171,18 @@ function [P_g_in, P_g_out, C_b] = simulateSystem(alpha, beta, gamma, I_air, init
         I_p_char_eq     = I_p_characteristic_eq(T_p(i), G, V_p);
 
         % Solar Panel Dynamics
-
-%         try
-%             fzero(T_p_sim_step, T_p(i))
-%         catch exception
-%             disp("test");
-%         end
         T_p(i+1)        = fzero(T_p_sim_step, T_p(i));
         I_p(i+1)        = max( fzero(I_p_char_eq, I_p(i)),  0.0 );
         P_p             = V_p * I_p(i+1);
 
         % Power Allocation 
-        [P_h_in, P_g_in, P_b_in] = pvPowerSplitter(P_p, repeatedAlpha(i+1), repeatedBeta(i+1));
-        [P_b_out, P_g_out] = powerDrawSplitter(P_d(i+1), P_h_in_a(i), repeatedGamma(i+1));
+        [P_h_in,  P_g_in(i+1), P_b_in]  = pvPowerSplitter(P_p, repeatedAlpha(i+1), repeatedBeta(i+1));
+        [P_b_out, P_g_out(i+1)]         = powerDrawSplitter(P_d(i+1), P_h_in, repeatedGamma(i+1)); % WARNING: double check, changed from P_h_in_a to P_h_in
 
-        P_b_minus       = -1.0*min( P_b_in - P_b_out,  0.0 );
-        P_g_minus       = -1.0*min( P_g_in - P_g_out,  0.0 );
-
-        P_h_in_a(i+1) = P_h_in + P_b_minus + P_g_minus;
-
-        P_b     = P_b_in - P_b_out; 
+        P_b = P_b_in - P_b_out; 
 
         C_b(i+1) = C_b(i) + dt*batteryDynamics(P_b, battParams); % this is what 1st order IRK turns into when system dynamics only depends on input... I think.
     end
-
-    % Grid power flow output vectors
-    P_g_in  = (repeatedAlpha * V_p) .* I_p;
-    P_g_out = repeatedGamma .* (P_d - P_h_in_a);
-
 end
 
 
